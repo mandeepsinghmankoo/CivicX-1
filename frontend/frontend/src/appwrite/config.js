@@ -2,8 +2,20 @@
 import { Client, Account, Databases, Storage, ID, Query, Permission, Role } from "appwrite";
 import shortner from "../ENV_Shortner/Shortner";
 
+const resolveEndpoint = () => {
+  const viteEndpoint = import.meta.env.VITE_APPWRITE_ENDPOINT;
+  const candidate1 = (typeof viteEndpoint === 'string' && viteEndpoint && viteEndpoint !== 'undefined') ? viteEndpoint : null;
+  const candidate2 = (typeof shortner?.appwriteUrl === 'string' && shortner.appwriteUrl && shortner.appwriteUrl !== 'undefined') ? shortner.appwriteUrl : null;
+  const endpoint = candidate1 || candidate2 || 'https://cloud.appwrite.io/v1';
+  if (!endpoint || endpoint === 'undefined') {
+    // Helpful debug message for development
+    console.error('Appwrite endpoint is not set or is invalid. Using fallback:', endpoint);
+  }
+  return endpoint;
+};
+
 const client = new Client()
-  .setEndpoint(shortner.appwriteUrl)
+  .setEndpoint(resolveEndpoint())
   .setProject(shortner.appwriteProjectId);
 
 export const account = new Account(client);
