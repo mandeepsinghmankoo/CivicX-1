@@ -12,7 +12,7 @@ from django.views.decorators.csrf import csrf_exempt
 from ultralytics import YOLO
 
 # ---------------------- MODEL PATH ----------------------
-MODEL_PATH = r"E:/CivicX-2/backend/runs/classify/civicx_cls_model6/weights/best.pt"
+MODEL_PATH = r"D:/CivicX-Final/CivicX-1/backend/runs/classify/civicx_cls_model6/weights/best.pt"
 model = YOLO(MODEL_PATH)
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -123,21 +123,167 @@ def classify_image(request):
     # Convert Uploaded file to OpenCV image
     file_bytes = np.asarray(bytearray(img_file.read()), dtype=np.uint8)
     img = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
+    if img is None:
+        # decoding failed
+        print("classify_image: failed to decode uploaded image")
+        return JsonResponse({"error": "Could not decode image"}, status=400)
 
-    results = model(img)
-    pred = results[0].names[results[0].probs.top1]
+    try:
+        results = model(img)
+    except Exception as e:
+        print("classify_image: model inference error:", e)
+        return JsonResponse({"error": "Model inference failed"}, status=500)
+    # Attempt to extract label and confidence safely
+    try:
+        res0 = results[0]
+        probs = getattr(res0, 'probs', None)
+        if probs is not None:
+            # probs may be a numpy array or an object with top1
+            if isinstance(probs, (list, tuple)) or hasattr(probs, 'tolist'):
+                probs_arr = np.array(probs)
+                top_idx = int(np.argmax(probs_arr))
+                confidence = float(probs_arr[top_idx])
+            else:
+                # object with top1 attribute
+                top_idx = int(getattr(probs, 'top1', 0))
+                confidence = float(probs[top_idx])
+        else:
+            # If probs not available, fallback to top1 if present
+            top_idx = getattr(res0, 'probs', None)
+            confidence = None
 
-    save_detection(pred)
+        pred = res0.names[top_idx] if res0 and top_idx is not None else None
+    except Exception:
+        pred = None
+        confidence = None
+
+    if pred:
+        save_detection(pred)
 
     return JsonResponse({
         "status": "success",
-        "predicted_class": pred
+        "predicted_class": pred,
+        "confidence": float(confidence) if confidence is not None else None
     })
+
+
+@csrf_exempt
+def latest_detection(request):
+    """Return the most recent detection record from the JSON log file."""
+    try:
+        if not os.path.exists(LOG_FILE):
+            return JsonResponse({"latest": None})
+
+        with open(LOG_FILE, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+            if not isinstance(data, list) or len(data) == 0:
+                return JsonResponse({"latest": None})
+            latest = data[-1]
+            return JsonResponse({"latest": latest})
+    except Exception as e:
+        print("latest_detection error:", e)
+        return JsonResponse({"error": "Could not fetch latest detection"}, status=500)
+
+
+# ---------------------- AUTO-ROUTE REPORT ENDPOINT ----------------------
+# Map predicted categories to municipal departments (case-insensitive)
+CATEGORY_TO_DEPARTMENT = {
+    "garbage": "Sanitation",
+    "pothole": "PWD",
+    "road crack": "PWD",
+    "broken streetlight": "Electrical",
+    "water leakage": "WaterDept",
+    "drain blockage": "DrainageDept",
+}
+
+
+def _normalize_label(label):
+    if not label:
+        return None
+    key = label.strip().lower().replace('_', ' ')
+    key = ' '.join(key.split())
+    return key
+
+
+@csrf_exempt
+def report_issue(request):
+    """Endpoint to accept an uploaded image, classify it, auto-assign to department, and return structured JSON.
+    POST fields: image
+    Returns: JSON {issue_type, assigned_department, confidence, status}
+    """
+    if request.method != 'POST':
+        return JsonResponse({"error": "Send POST request with image."}, status=400)
+
+    img_file = request.FILES.get('image')
+    if not img_file:
+        return JsonResponse({"error": "No image uploaded."}, status=400)
+
+    try:
+        # Convert to OpenCV image
+        file_bytes = np.asarray(bytearray(img_file.read()), dtype=np.uint8)
+        img = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
+        if img is None:
+            raise ValueError("Image decode failed")
+
+        # Predict using existing model
+        results = model(img)
+        res0 = results[0]
+
+        # Extract label and confidence robustly
+        try:
+            probs = getattr(res0, 'probs', None)
+            if probs is not None:
+                if isinstance(probs, (list, tuple)) or hasattr(probs, 'tolist'):
+                    probs_arr = np.array(probs)
+                    top_idx = int(np.argmax(probs_arr))
+                    confidence = float(probs_arr[top_idx])
+                else:
+                    top_idx = int(getattr(probs, 'top1', 0))
+                    confidence = float(probs[top_idx])
+            else:
+                top_idx = None
+                confidence = None
+        except Exception:
+            top_idx = None
+            confidence = None
+
+        label = res0.names[top_idx] if (res0 and top_idx is not None) else None
+
+        # Save detection and preview if label found
+        if label:
+            save_detection(label)
+            try:
+                _save_preview_image(img)
+            except Exception:
+                pass
+
+        # Map to department
+        assigned_department = CATEGORY_TO_DEPARTMENT.get(_normalize_label(label), 'Unassigned') if label else 'Unassigned'
+
+        return JsonResponse({
+            "issue_type": str(label) if label else None,
+            "assigned_department": assigned_department,
+            "confidence": float(confidence) if confidence is not None else None,
+            "status": "Auto-Routed" if label else "Could not classify",
+        })
+
+    except Exception as e:
+        print('report_issue error:', e)
+        return JsonResponse({"error": "Internal server error"}, status=500)
 
 
 # ---------------------- BACKGROUND THREAD FOR WEBCAM ----------------------
 def webcam_detection_thread():
     cap = cv2.VideoCapture(0)
+
+    # Check if camera was acquired successfully
+    if not cap.isOpened():
+        print("webcam_detection_thread: could not open camera (maybe it's in use by the browser)")
+        try:
+            cap.release()
+        except Exception:
+            pass
+        return
 
     prev_pred = None
     start_time = None
@@ -236,6 +382,19 @@ def start_webcam(request):
         # If a thread is already running, just return
         if webcam_thread and webcam_thread.is_alive():
             return JsonResponse({"status": "already_running"})
+
+        # quick check: try opening the camera briefly to ensure it's available
+        temp_cap = cv2.VideoCapture(0)
+        if not temp_cap.isOpened():
+            try:
+                temp_cap.release()
+            except Exception:
+                pass
+            return JsonResponse({"error": "Could not access camera (maybe it's in use)"}, status=500)
+        try:
+            temp_cap.release()
+        except Exception:
+            pass
 
         # ensure stop event is cleared and start thread
         webcam_stop_event.clear()
