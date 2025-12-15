@@ -5,11 +5,13 @@ import { login, logout } from './store/authSlice'
 import { Footer } from './components/Index'
 import { Header } from './components/Index'
 import { Outlet } from 'react-router-dom'
+import { useNotifications } from './hooks/useNotifications'
 import './App.css';
 
 function App() {
     const [loading, setLoading] = useState(true);
     const dispatch = useDispatch();
+    useNotifications(); // Initialize notifications
 
     useEffect(() => {
         authService.getCurrentUser()

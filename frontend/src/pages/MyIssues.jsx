@@ -63,6 +63,9 @@ function MyIssues() {
 						
 						<p className="mt-2 text-gray-400 text-sm sm:text-base">Status: {issue.status}</p>
 						<p className="mt-1 text-gray-500 text-xs sm:text-sm">Category: {issue.category}</p>
+						{issue.address && (
+							<p className="mt-1 text-gray-500 text-xs sm:text-sm">📍 {issue.address}</p>
+						)}
 					</Link>
 				))}
 			</div>

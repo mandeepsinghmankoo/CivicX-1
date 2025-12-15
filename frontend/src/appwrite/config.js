@@ -26,6 +26,7 @@ export const DATABASE_ID = shortner.appwriteDatabaseId;
 export const COLLECTION_ID = shortner.appwriteIssuesCollectionId;
 export const ISSUE_COLLECTION_ID = shortner.appwriteIssuesCollectionId;
 export const VOTES_COLLECTION_ID = shortner.appwriteVotesCollectionId;
+export { Query };
 
 class ConfigService {
 
@@ -35,9 +36,9 @@ async uploadFile(file) {
     ID.unique(),
     file,
     [
-      Permission.read(Role.any()),      // ✅ anyone can view
-      Permission.update(Role.users()),  // logged-in users can update
-      Permission.delete(Role.users())   // logged-in users can delete
+      Permission.read(Role.any()),
+      Permission.update(Role.users()),
+      Permission.delete(Role.users())
     ]
   );
 }
@@ -74,15 +75,9 @@ async uploadFile(file) {
 
       const permissions = [
         Permission.read(Role.any()),
-        Permission.write(Role.user(issuePayload.userId)),
         Permission.update(Role.user(issuePayload.userId)),
-        Permission.delete(Role.user(issuePayload.userId)),
+        Permission.delete(Role.user(issuePayload.userId))
       ];
-
-      // If an officials team is configured, allow them to update issues
-      if (shortner.appwriteOfficialsTeamId) {
-        permissions.push(Permission.update(Role.team(shortner.appwriteOfficialsTeamId)));
-      }
 
       // Prepare geolocation fields if available
       const lat = issuePayload.lat !== undefined ? Number(issuePayload.lat) : undefined;
@@ -102,6 +97,7 @@ async uploadFile(file) {
           createdBy: issuePayload.userId,
           votes: 0,
           fileIds: issuePayload.fileIds || [],
+          address: issuePayload.address || "",
           ...(lat !== undefined ? { lat } : {}),
           ...(lng !== undefined ? { lng } : {}),
         },
@@ -129,9 +125,8 @@ async uploadFile(file) {
         },
         [
           Permission.read(Role.users()),
-          Permission.write(Role.user(userId)),
           Permission.update(Role.user(userId)),
-          Permission.delete(Role.user(userId)),
+          Permission.delete(Role.user(userId))
         ]
       );
 
@@ -293,7 +288,7 @@ async updateIssueStatus(issueId, statusOrObj) {
           },
           [
             Permission.read(Role.any()),
-            Permission.write(Role.user(userId)),
+            Permission.update(Role.user(userId)),
             Permission.delete(Role.user(userId))
           ]
         );
@@ -326,6 +321,31 @@ async updateIssueStatus(issueId, statusOrObj) {
     } catch (err) {
       console.error("Error fetching user votes:", err);
       return [];
+    }
+  }
+
+  // Enhanced detection method for backend integration
+  async detectIssueCategoryFromBase64({ imageBase64 }) {
+    try {
+      const response = await fetch('http://127.0.0.1:8000/Interference/classify_base64/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ imageBase64 })
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        return {
+          label: result.predicted_class,
+          confidence: result.confidence || 1.0
+        };
+      }
+      return null;
+    } catch (err) {
+      console.error('Detection error:', err);
+      return null;
     }
   }
 

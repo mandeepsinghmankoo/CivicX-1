@@ -4,11 +4,12 @@ import { LoadingSpinner } from '../components/Index'
 import { useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { databases, DATABASE_ID, ISSUE_COLLECTION_ID} from "../appwrite/config";
+import { databases, DATABASE_ID, ISSUE_COLLECTION_ID, Query} from "../appwrite/config";
 import configService from "../appwrite/config";
 import AnalyticsDashboard from './AnalyticsDashboard';
 import Leaderboard from './Leaderboard';
 import WorkerApp from './WorkerApp';
+import HomeVoiceAssistant from '../components/HomeVoiceAssistant';
 
 function Home() {
   const navigate = useNavigate();
@@ -28,7 +29,9 @@ function Home() {
     const fetchIssues = async () => {
       try {
         setIsLoading(true);
-        const res = await databases.listDocuments(DATABASE_ID, ISSUE_COLLECTION_ID);
+        const res = await databases.listDocuments(DATABASE_ID, ISSUE_COLLECTION_ID, [
+          Query.orderDesc("$createdAt")
+        ]);
       
         console.log("Issues:", res.documents);
         console.log("First issue fileIds:", res.documents[0]?.fileIds);
@@ -458,6 +461,8 @@ function Home() {
         </section>
       )}
 
+      {/* Voice Assistant */}
+      <HomeVoiceAssistant />
     </>
   )
 }

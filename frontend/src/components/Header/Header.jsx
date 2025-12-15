@@ -1,8 +1,9 @@
 import { Container, Logo, Logout } from '../Index'
 import { Link, useNavigate } from 'react-router-dom'
 import { useSelector } from 'react-redux'
-import { Bell, Menu, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { useState, useRef, useEffect } from 'react';
+import NotificationDropdown from '../NotificationDropdown';
 
 
 function Header() {
@@ -45,7 +46,6 @@ function Header() {
     { name: 'My Issues', slug: '/my-issues', active: authStatus && userRole === 'citizen' },
     // Official-only: Manage Issues
     { name: 'Manage Issues', slug: '/manage-issues', active: authStatus && userRole === 'official' },
-    { icon: <Bell size={22} />, slug: '/notifications', active: authStatus },
     { name: 'LogIn', slug: '/login', active: !authStatus },
     { name: 'SignUp', slug: '/signup', active: !authStatus },
   ]
@@ -81,6 +81,13 @@ function Header() {
                 ) : null
               )
             }
+
+            {/* Notifications (only when logged in) */}
+            {authStatus && (
+              <li>
+                <NotificationDropdown />
+              </li>
+            )}
 
             {/* Profile Dropdown (only when logged in) */}
             {authStatus && (

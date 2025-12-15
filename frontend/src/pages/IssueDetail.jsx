@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import configService from '../appwrite/config'
 import { LoadingSpinner } from '../components/Index'
+import { reverseGeocode } from '../utils/geocoding'
 
 function IssueDetail() {
 	const { issueId } = useParams()
@@ -9,6 +10,7 @@ function IssueDetail() {
 	const [loading, setLoading] = useState(true)
 	const [error, setError] = useState(null)
 	const [imageUrls, setImageUrls] = useState([])
+	const [address, setAddress] = useState('')
 	// Comments state
 	const [comments, setComments] = useState([]);
 	const [commentInput, setCommentInput] = useState("");
@@ -19,6 +21,16 @@ function IssueDetail() {
 			try {
 				const doc = await configService.getIssueById(issueId)
 				setIssue(doc)
+
+				// Get address from coordinates
+				if (doc.lat && doc.lng) {
+					try {
+						const addr = await reverseGeocode(doc.lat, doc.lng);
+						setAddress(addr);
+					} catch (err) {
+						console.error('Failed to get address:', err);
+					}
+				}
 
 				// Get image URLs if fileIds exist
 				if (doc.fileIds && doc.fileIds.length > 0) {
@@ -154,6 +166,10 @@ function IssueDetail() {
 							<div>
 								<h3 className="text-lg font-semibold mb-3 text-[#045c65]">Location</h3>
 								<div className="space-y-2">
+									<div className="mb-3">
+										<span className="text-gray-400 block mb-1">Address:</span>
+										<span className="text-white text-sm">{address || 'Loading address...'}</span>
+									</div>
 									<div className="flex justify-between">
 										<span className="text-gray-400">Latitude:</span>
 										<span className="text-white">{issue.lat}</span>

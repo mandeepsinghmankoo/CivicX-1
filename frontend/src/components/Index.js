@@ -10,6 +10,7 @@ import Input from './Input'
 import Signup from './Signup'
 import ReportIssue from './ReportIssue'
 import LoadingSpinner from './LoadingSpinner'
+import NotificationDropdown from './NotificationDropdown'
 
 export{
     Header,
@@ -23,5 +24,6 @@ export{
     Input,
     Signup,
     ReportIssue,
-    LoadingSpinner
+    LoadingSpinner,
+    NotificationDropdown
 }

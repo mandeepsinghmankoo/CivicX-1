@@ -2,12 +2,16 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import configService from "../appwrite/config";
 import { Button, Input, Logo } from "../components/Index";
+import { addNotification } from "../store/notificationSlice";
+import notificationService from "../services/notificationService";
+import AIChatbot from "./AIChatbot";
 
 function ReportIssue() {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const { register, handleSubmit, setValue, formState: { errors } } = useForm();
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
@@ -27,6 +31,7 @@ function ReportIssue() {
   const streamRef = useRef(null);
   const detectionIntervalRef = useRef(null);
   const userData = useSelector((state) => state.auth.userData);
+  const { soundEnabled } = useSelector(state => state.notifications);
 
   // Only citizens can access
   useEffect(() => {
@@ -42,12 +47,31 @@ function ReportIssue() {
   useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          const locStr = `${pos.coords.latitude}, ${pos.coords.longitude}`;
-          setLocation(locStr);
-          setValue("location", locStr);
-          setValue("lat", pos.coords.latitude);
-          setValue("lng", pos.coords.longitude);
+        async (pos) => {
+          const lat = pos.coords.latitude;
+          const lng = pos.coords.longitude;
+          
+          try {
+            const response = await fetch(`http://127.0.0.1:8000/Interference/reverse-geocode/?lat=${lat}&lng=${lng}`);
+            if (response.ok) {
+              const data = await response.json();
+              const address = data.address || `${lat}, ${lng}`;
+              setLocation(address);
+              setValue("location", address);
+            } else {
+              // Fallback to coordinates if backend endpoint not available
+              const locStr = `${lat}, ${lng}`;
+              setLocation(locStr);
+              setValue("location", locStr);
+            }
+          } catch (error) {
+            const locStr = `${lat}, ${lng}`;
+            setLocation(locStr);
+            setValue("location", locStr);
+          }
+          
+          setValue("lat", lat);
+          setValue("lng", lng);
         },
         () => {}
       );
@@ -422,15 +446,32 @@ function ReportIssue() {
     }
   };
 
-  const tryParseLatLng = (loc) => {
+  const tryParseLatLng = async (loc) => {
     if (!loc) return { lat: undefined, lng: undefined };
+    
+    // If it's already coordinates
     const parts = loc.split(",").map((s) => s.trim());
-    if (parts.length !== 2) return { lat: undefined, lng: undefined };
-    const parsedLat = Number(parts[0]);
-    const parsedLng = Number(parts[1]);
-    if (Number.isFinite(parsedLat) && Number.isFinite(parsedLng)) {
-      return { lat: parsedLat, lng: parsedLng };
+    if (parts.length === 2) {
+      const parsedLat = Number(parts[0]);
+      const parsedLng = Number(parts[1]);
+      if (Number.isFinite(parsedLat) && Number.isFinite(parsedLng)) {
+        return { lat: parsedLat, lng: parsedLng };
+      }
     }
+    
+    // If it's an address, geocode it
+    try {
+      const response = await fetch(`http://127.0.0.1:8000/Interference/geocode/?address=${encodeURIComponent(loc)}`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.lat && data.lng) {
+          return { lat: data.lat, lng: data.lng };
+        }
+      }
+    } catch (error) {
+      console.error('Geocoding failed:', error);
+    }
+    
     return { lat: undefined, lng: undefined };
   };
 
@@ -450,26 +491,54 @@ function ReportIssue() {
       let lng = data.lng !== undefined ? Number(data.lng) : undefined;
 
       if (lat === undefined || lng === undefined) {
-        const parsed = tryParseLatLng(location || data.location);
+        const parsed = await tryParseLatLng(location || data.location);
         lat = parsed.lat;
         lng = parsed.lng;
+        
+        // Update form with coordinates
+        if (lat !== undefined && lng !== undefined) {
+          setValue("lat", lat);
+          setValue("lng", lng);
+        }
       }
 
       if (lat === undefined || lng === undefined) {
         throw new Error("Location coordinates not available. Please allow location or enter 'lat, lng' in Location.");
       }
 
-      await configService.createIssue({
+      const newIssue = await configService.createIssue({
         title: data.title,
         description: data.description,
         category: data.category,
         severity: Number(data.severity) || 3,
         urgency: Number(data.urgency) || 60,
         userId: userData.$id,
+        address: location || data.location || "",
         lat,
         lng,
         fileIds: fileIds,
       });
+
+      // Show success message to citizen
+      const citizenNotification = {
+        title: 'Complaint Submitted Successfully',
+        message: `Your complaint "${data.title}" has been submitted`,
+        type: 'complaint_submitted',
+        issueId: newIssue.$id
+      };
+      
+      dispatch(addNotification(citizenNotification));
+      
+      if (soundEnabled) {
+        notificationService.playNotificationSound();
+      }
+      
+      notificationService.showBrowserNotification(
+        citizenNotification.title,
+        citizenNotification.message
+      );
+      
+      // Note: Officials will be notified via real-time subscription in useNotifications hook
 
       setSuccess(true);
       setTimeout(() => navigate("/"), 2000);
@@ -504,9 +573,13 @@ function ReportIssue() {
               {categories.map((c) => <option key={c}>{c}</option>)}
             </select>
 
-            <Input label="Location" value={location} onChange={(e) => setLocation(e.target.value)} darkMode {...register("location")} />
-            <input type="hidden" {...register("lat")} />
-            <input type="hidden" {...register("lng")} />
+            <div>
+              <Input label="Address" placeholder="Enter full address" value={location} onChange={(e) => setLocation(e.target.value)} darkMode {...register("location")} />
+              <div className="grid grid-cols-2 gap-2 mt-2">
+                <Input label="Latitude" placeholder="Auto-filled" darkMode {...register("lat")} readOnly />
+                <Input label="Longitude" placeholder="Auto-filled" darkMode {...register("lng")} readOnly />
+              </div>
+            </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
@@ -618,6 +691,15 @@ function ReportIssue() {
           </form>
         )}
       </div>
+      
+      {/* AI Chatbot */}
+      <AIChatbot 
+        setValue={setValue}
+        openCamera={openCamera}
+        handleFileChange={handleFileChange}
+        handleSubmit={handleSubmit}
+        categories={categories}
+      />
     </section>
   );
 
