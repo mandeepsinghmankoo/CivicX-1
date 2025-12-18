@@ -19,6 +19,9 @@ import MyIssues from './pages/MyIssues.jsx';
 import AnalyticsDashboard from './pages/AnalyticsDashboard.jsx';
 import Leaderboard from './pages/Leaderboard.jsx';
 import WorkerApp from './pages/WorkerApp.jsx';
+import Profile from './pages/Profile.jsx';
+import PredictiveIntelligence from './pages/PredictiveIntelligence.jsx';
+import AISolutionEngine from './pages/AISolutionEngine.jsx';
 
 
 const router = createBrowserRouter([
@@ -111,7 +114,29 @@ const router = createBrowserRouter([
           </RoleGuard>
         </AuthLayout>
       },
-      
+      {
+        path: '/profile',
+        element: <AuthLayout authentication={true}>
+          <Profile />
+        </AuthLayout>
+      },
+      {
+        path: '/predictive-intelligence',
+        element: <AuthLayout authentication={true}>
+          <RoleGuard allowedRoles={['citizen', 'official']}>
+            <PredictiveIntelligence />
+          </RoleGuard>
+        </AuthLayout>
+      },
+      {
+        path: '/ai-solution-engine',
+        element: <AuthLayout authentication={true}>
+          <RoleGuard allowedRoles={['citizen', 'official']}>
+            <AISolutionEngine />
+          </RoleGuard>
+        </AuthLayout>
+      },
+
     ]
   }
 ])

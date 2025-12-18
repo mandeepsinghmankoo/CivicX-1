@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 // src/pages/ReportIssue.jsx
 import React, { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
@@ -582,16 +583,7 @@ function ReportIssue() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-gray-300 mb-1">Severity</label>
-                <select className="w-full p-2 bg-gray-800 text-white rounded-lg" defaultValue="3" {...register("severity")}>
-                  <option value="1">1 - Low</option>
-                  <option value="2">2 - Moderate</option>
-                  <option value="3">3 - Normal</option>
-                  <option value="4">4 - High</option>
-                  <option value="5">5 - Critical</option>
-                </select>
-              </div>
+              
               <div>
                 <label className="block text-gray-300 mb-1">Urgency Level</label>
                 <select className="w-full p-2 bg-gray-800 text-white rounded-lg" defaultValue="60" {...register("urgency")}>
@@ -648,10 +640,10 @@ function ReportIssue() {
               {isLiveDetection && (
                 <div className="space-y-2">
                   <div className="flex flex-col sm:flex-row items-center gap-2">
-                    <Button type="button" onClick={capturePhoto} className="bg-green-600 hover:bg-green-700 text-white px-3 sm:px-4 py-2 rounded-lg text-sm sm:text-base">
+                    <Button type="button" onClick={capturePhoto} className="bg-[#045c65] hover:bg-[#067a85] text-white px-3 sm:px-4 py-2 rounded-lg text-sm sm:text-base">
                       Capture
                     </Button>
-                    <Button type="button" onClick={stopStream} className="bg-red-600 hover:bg-red-700 text-white px-3 sm:px-4 py-2 rounded-lg text-sm sm:text-base">
+                    <Button type="button" onClick={stopStream} className="bg-[#045c65] hover:bg-[#067a85] text-white px-3 sm:px-4 py-2 rounded-lg text-sm sm:text-base">
                       Stop Camera
                     </Button>
                   </div>

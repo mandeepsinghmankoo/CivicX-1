@@ -1,20 +1,28 @@
 import React, { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
+import { useSelector } from 'react-redux'
 import configService from '../appwrite/config'
 import { LoadingSpinner } from '../components/Index'
 import { reverseGeocode } from '../utils/geocoding'
 
 function IssueDetail() {
 	const { issueId } = useParams()
+	const userData = useSelector(state => state.auth.userData)
+	const userRole = userData?.role || 'citizen'
 	const [issue, setIssue] = useState(null)
 	const [loading, setLoading] = useState(true)
 	const [error, setError] = useState(null)
-	const [imageUrls, setImageUrls] = useState([])
 	const [address, setAddress] = useState('')
 	// Comments state
 	const [comments, setComments] = useState([]);
 	const [commentInput, setCommentInput] = useState("");
 	const [commentLoading, setCommentLoading] = useState(false);
+	// Official management state
+	const [newStatus, setNewStatus] = useState('')
+	const [proofFile, setProofFile] = useState(null)
+	const [progressFile, setProgressFile] = useState(null)
+	const [updateDescription, setUpdateDescription] = useState('')
+	const [updating, setUpdating] = useState(false)
 
 	useEffect(() => {
 		(async () => {
@@ -32,30 +40,6 @@ function IssueDetail() {
 					}
 				}
 
-				// Get image URLs if fileIds exist
-				if (doc.fileIds && doc.fileIds.length > 0) {
-					const urls = await Promise.all(doc.fileIds.map(async (fileId) => {
-						const viewUrl = configService.getFileUrl(fileId);
-						const downloadUrl = configService.getFileDownloadUrl(fileId);
-
-						// Try to create a blob URL for better compatibility
-						try {
-							const response = await fetch(viewUrl);
-							if (response.ok) {
-								const blob = await response.blob();
-								const blobUrl = URL.createObjectURL(blob);
-								return { viewUrl, downloadUrl, fileId, blobUrl };
-							}
-						} catch (error) {
-							console.log(`Failed to create blob for ${fileId}:`, error);
-						}
-
-						return { viewUrl, downloadUrl, fileId };
-					}));
-					setImageUrls(urls)
-				} else {
-					setImageUrls([])
-				}
 			} catch (e) {
 				setError(e.message)
 			} finally {
@@ -86,6 +70,46 @@ function IssueDetail() {
 			setCommentInput("");
 			setCommentLoading(false);
 		}, 500);
+	};
+
+	// Handle status update by official
+	const handleStatusUpdate = async () => {
+		if (!newStatus) return;
+		setUpdating(true);
+		try {
+			let updateData = { status: newStatus };
+
+			// If resolved, upload proof
+			if (newStatus === 'resolved' && proofFile) {
+				const uploadedFile = await configService.uploadFile(proofFile);
+				updateData.confirmationFileId = uploadedFile.$id;
+			}
+
+			// If in_progress, upload progress file and add description
+			if (newStatus === 'in_progress') {
+				if (progressFile) {
+					const uploadedFile = await configService.uploadFile(progressFile);
+					updateData.progressFileId = uploadedFile.$id;
+				}
+				if (updateDescription) {
+					updateData.officialNote = updateDescription;
+				}
+			}
+
+			await configService.updateIssueStatus(issueId, updateData);
+			const updatedIssue = await configService.getIssueById(issueId);
+			setIssue(updatedIssue);
+			setNewStatus('');
+			setProofFile(null);
+			setProgressFile(null);
+			setUpdateDescription('');
+			alert('Issue status updated successfully!');
+		} catch (err) {
+			console.error('Error updating status:', err);
+			alert('Failed to update status');
+		} finally {
+			setUpdating(false);
+		}
 	};
 
 	if (loading) return <LoadingSpinner text="Loading issue details..." size="large" fullScreen={true} />
@@ -155,6 +179,17 @@ function IssueDetail() {
 								<img
 									src={configService.getFileUrl(issue.confirmationFileId)}
 									alt="Confirmation Proof"
+									className="mt-2 rounded-lg border border-gray-700 max-h-64 object-cover"
+								/>
+							</div>
+						)}
+
+						{issue.progressFileId && (
+							<div className="mt-4">
+								<p className="text-gray-400 text-sm">🔄 Progress Update:</p>
+								<img
+									src={configService.getFileUrl(issue.progressFileId)}
+									alt="Progress Update"
 									className="mt-2 rounded-lg border border-gray-700 max-h-64 object-cover"
 								/>
 							</div>
@@ -236,6 +271,82 @@ function IssueDetail() {
 								issue.urgency >= 50 ? 'Medium Priority' : 'Low Priority'}
 						</p>
 					</div>
+
+					{/* Official Management Section */}
+					{userRole === 'official' && (
+						<div className="bg-[#181818] mt-6 p-6 rounded-xl shadow border border-gray-700">
+							<h3 className="text-lg font-semibold mb-4 text-[#067a85]">🔧 Manage Issue</h3>
+							
+							<div className="space-y-4">
+								<div>
+									<label className="block text-gray-300 mb-2">Update Status</label>
+									<select 
+										value={newStatus}
+										onChange={(e) => setNewStatus(e.target.value)}
+										className="w-full px-3 py-2 bg-gray-800 text-white rounded-lg border border-gray-700"
+									>
+										<option value="">Select new status</option>
+										<option value="in_progress">In Progress</option>
+										<option value="resolved">Resolved</option>
+									</select>
+								</div>
+
+								{newStatus === 'resolved' && (
+									<div>
+										<label className="block text-gray-300 mb-2">📸 Upload Proof of Resolution</label>
+										<input
+											type="file"
+											accept="image/*"
+											onChange={(e) => setProofFile(e.target.files[0])}
+											className="w-full px-3 py-2 bg-gray-800 text-white rounded-lg border border-gray-700"
+										/>
+										{proofFile && <p className="text-green-400 text-sm mt-1">✓ {proofFile.name}</p>}
+									</div>
+								)}
+
+								{newStatus === 'in_progress' && (
+									<div className="space-y-4">
+										<div>
+											<label className="block text-gray-300 mb-2">📸 Upload Progress Photo (Optional)</label>
+											<input
+												type="file"
+												accept="image/*"
+												onChange={(e) => setProgressFile(e.target.files[0])}
+												className="w-full px-3 py-2 bg-gray-800 text-white rounded-lg border border-gray-700"
+											/>
+											{progressFile && <p className="text-green-400 text-sm mt-1">✓ {progressFile.name}</p>}
+										</div>
+										<div>
+											<label className="block text-gray-300 mb-2">📝 Update Description</label>
+											<textarea
+												value={updateDescription}
+												onChange={(e) => setUpdateDescription(e.target.value)}
+												placeholder="e.g., Issue will be resolved within 3-5 days..."
+												rows="3"
+												className="w-full px-3 py-2 bg-gray-800 text-white rounded-lg border border-gray-700"
+											/>
+										</div>
+									</div>
+								)}
+
+								{issue.officialNote && (
+									<div className="bg-[#045c65]/20 p-3 rounded-lg">
+										<p className="text-[#067a85] text-sm font-semibold">Official Note:</p>
+										<p className="text-white text-sm mt-1">{issue.officialNote}</p>
+									</div>
+								)}
+
+								<button
+									onClick={handleStatusUpdate}
+									disabled={!newStatus || updating}
+									className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white rounded-lg font-semibold transition-colors"
+								>
+									{updating ? 'Updating...' : 'Update Issue Status'}
+								</button>
+							</div>
+						</div>
+					)}
+
 				{/* Comments Section */}
 				<div className="bg-[#181818] mt-8 p-6 rounded-xl shadow border border-gray-700">
 					<h3 className="text-lg font-semibold mb-4 text-[#045c65]">Comments</h3>

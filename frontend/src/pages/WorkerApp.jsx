@@ -153,14 +153,14 @@ function WorkerApp() {
                   key={issue.$id}
                   className={`p-4 rounded-lg border cursor-pointer transition-colors ${
                     selectedIssue?.$id === issue.$id
-                      ? 'bg-blue-900/30 border-blue-500'
+                      ? 'bg-[#045c65]/30 border-[#067a85]'
                       : 'bg-gray-700 border-gray-600 hover:bg-gray-600'
                   }`}
                   onClick={() => setSelectedIssue(issue)}
                 >
                   <div className="flex items-start justify-between mb-2">
                     <h3 className="font-semibold text-sm">{issue.title}</h3>
-                    <span className={`text-xs px-2 py-1 rounded ${issue.severity >= 4 ? 'bg-red-900 text-red-300' : issue.severity >= 3 ? 'bg-orange-900 text-orange-300' : 'bg-green-900 text-green-300'}`}>
+                    <span className={`text-xs px-2 py-1 rounded ${issue.severity >= 4 ? 'bg-red-900 text-red-300' : issue.severity >= 3 ? 'bg-orange-900 text-orange-300' : 'bg-[#045c65]/50 text-[#067a85]'}`}>
                       {issue.severity}/5
                     </span>
                   </div>
@@ -174,13 +174,13 @@ function WorkerApp() {
                   <div className="flex gap-2 mt-2">
                     <button
                       onClick={(e) => { e.stopPropagation(); startNavigation(issue); }}
-                      className="flex-1 px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs transition-colors"
+                      className="flex-1 px-3 py-1 bg-[#045c65] hover:bg-[#067a85] text-white rounded text-xs transition-colors"
                     >
                       Navigate
                     </button>
                     <button
                       onClick={(e) => { e.stopPropagation(); openGoogleMaps(issue); }}
-                      className="flex-1 px-3 py-1 bg-green-600 hover:bg-green-700 text-white rounded text-xs transition-colors"
+                      className="flex-1 px-3 py-1 bg-[#045c65] hover:bg-[#067a85] text-white rounded text-xs transition-colors"
                     >
                       Google Maps
                     </button>
@@ -227,7 +227,7 @@ function WorkerApp() {
                       />
                       <button
                         onClick={() => markAsResolved(selectedIssue)}
-                        className="px-3 py-1 bg-green-600 hover:bg-green-700 text-white rounded flex items-center gap-2 text-sm"
+                        className="px-3 py-1 bg-[#045c65] hover:bg-[#067a85] text-white rounded flex items-center gap-2 text-sm"
                       >
                         <CheckCircle className="w-4 h-4"/> Mark as Resolved
                       </button>

@@ -69,7 +69,7 @@ function NotificationDropdown() {
               {unreadCount > 0 && (
                 <button
                   onClick={() => dispatch(markAllAsRead())}
-                  className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
+                  className="text-xs text-[#067a85] hover:text-[#04a9b0] transition-colors"
                 >
                   Mark all read
                 </button>
@@ -87,7 +87,7 @@ function NotificationDropdown() {
                 <div
                   key={notification.id}
                   className={`p-3 border-b border-gray-700 hover:bg-gray-800 transition-colors cursor-pointer ${
-                    !notification.read ? 'bg-blue-900/20' : ''
+                    !notification.read ? 'bg-[#045c65]/20' : ''
                   }`}
                   onClick={() => handleNotificationClick(notification)}
                 >
@@ -114,7 +114,7 @@ function NotificationDropdown() {
                     </button>
                   </div>
                   {!notification.read && (
-                    <div className="w-2 h-2 bg-blue-500 rounded-full absolute left-1 top-1/2 transform -translate-y-1/2"></div>
+                    <div className="w-2 h-2 bg-[#045c65] rounded-full absolute left-1 top-1/2 transform -translate-y-1/2"></div>
                   )}
                 </div>
               ))

@@ -229,7 +229,7 @@ function Home() {
                   <p className="px-4 py-2 text-gray-500">No results found</p>
                 )}
                 {!authStatus && (
-                  <div className="px-4 py-2 bg-yellow-50 text-sm text-yellow-700">
+                  <div className="px-4 py-2 bg-[#045c65]/20 text-sm text-[#067a85]">
                     🔒 Log in to view more results
                   </div>
                 )}
@@ -238,34 +238,38 @@ function Home() {
           </div>
 
           <div className='mt-7 flex flex-col sm:flex-row sm:space-x-4 md:space-x-5 space-y-4 sm:space-y-0'>
-            <Button
-              onClick={() => navigate("/repoissue")}
-              type="submit"
-              className="w-full sm:w-auto md:w-1/4 text-lg sm:text-xl font-bold py-3 md:py-4 px-6 md:px-8 hover:text-black transition-all duration-300 rounded-3xl text-white bg-[#045c65]"
-            >
-              Report an Issue
-              <div className='font-light text-xs'>(for Citizens)</div>
-            </Button>
-            <Button
-              onClick={() => navigate("/login")}
-              type="submit"
-              className="w-full sm:w-auto md:w-1/4 text-lg sm:text-xl font-bold py-3 md:py-4 px-6 md:px-8 hover:text-[#bfe9ed] transition-all duration-300 rounded-3xl text-white border-2"
-            >
-              Explore Issues
-              <div className='font-light text-xs'>(for Officials)</div>
-            </Button>
+            {(!authStatus || userRole === 'citizen') && (
+              <Button
+                onClick={() => navigate("/repoissue")}
+                type="submit"
+                className="w-full sm:w-auto md:w-1/4 text-lg sm:text-xl font-bold py-3 md:py-4 px-6 md:px-8 hover:text-black transition-all duration-300 rounded-3xl text-white bg-[#045c65]"
+              >
+                Report an Issue
+                <div className='font-light text-xs'>(for Citizens)</div>
+              </Button>
+            )}
+            {(!authStatus || userRole === 'official') && (
+              <Button
+                onClick={() => authStatus ? navigate("/liveissues") : navigate("/login")}
+                type="submit"
+                className="w-full sm:w-auto md:w-1/4 text-lg sm:text-xl font-bold py-3 md:py-4 px-6 md:px-8 hover:text-[#bfe9ed] transition-all duration-300 rounded-3xl text-white border-2"
+              >
+                Explore Issues
+                <div className='font-light text-xs'>(for Officials)</div>
+              </Button>
+            )}
           </div>
         </div>
       </section>
 
       {/* Live Issues Preview Section */}
-      <section className="text-white py-6 px-4 md:px-8 mx-2 md:mx-30 bg-gradient-to-tl from-[#02130a] to-[#082021] rounded-3xl my-5">
+      <section className="text-white py-6 px-4 md:px-8 mx-2 md:mx-30 bg-gradient-to-tl from-[#0b2a2d] to-[#020d0e] rounded-3xl my-5">
         {authStatus ? (
           <div> 
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-2">
               <div className="text-xl sm:text-2xl md:text-4xl font-bold">Live Issue Dashboard</div>
               {issues.length > 3 && (
-                <Link to="/liveissues" className="text-blue-400 hover:underline text-sm sm:text-base">
+                <Link to="/liveissues" className="text-[#067a85] hover:underline text-sm sm:text-base">
                   See More →
                 </Link>
               )}
@@ -325,23 +329,25 @@ function Home() {
                       </div>
                     </div>
                     
-                    {/* Voting Section */}
-                    <div className="mt-4 flex items-center justify-between">
-                      <button
-                        onClick={(e) => handleVote(issue.id, e)}
-                        className={`flex items-center gap-2 px-3 py-1 rounded-lg text-sm transition-colors ${
-                          votedIssues.has(issue.id)
-                            ? 'bg-green-600 text-white'
-                            : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                        }`}
-                      >
-                        <span>👍</span>
-                        <span>{votedIssues.has(issue.id) ? 'Voted' : 'Vote'}</span>
-                      </button>
-                      <span className="text-xs text-gray-400">
-                        {voteCounts[issue.id] > 0 ? `${voteCounts[issue.id]} vote${voteCounts[issue.id] !== 1 ? 's' : ''}` : 'No votes yet'}
-                      </span>
-                    </div>
+                    {/* Voting Section - Only for citizens */}
+                    {userRole === 'citizen' && (
+                      <div className="mt-4 flex items-center justify-between">
+                        <button
+                          onClick={(e) => handleVote(issue.id, e)}
+                          className={`flex items-center gap-2 px-3 py-1 rounded-lg text-sm transition-colors ${
+                            votedIssues.has(issue.id)
+                              ? 'bg-green-600 text-white'
+                              : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                          }`}
+                        >
+                          <span>👍</span>
+                          <span>{votedIssues.has(issue.id) ? 'Voted' : 'Vote'}</span>
+                        </button>
+                        <span className="text-xs text-gray-400">
+                          {voteCounts[issue.id] > 0 ? `${voteCounts[issue.id]} vote${voteCounts[issue.id] !== 1 ? 's' : ''}` : 'No votes yet'}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -352,7 +358,7 @@ function Home() {
             <h2 className="text-xl sm:text-2xl md:text-4xl font-bold mb-4">Live Issue Dashboard</h2>
             <p className="text-gray-400 mb-6 text-sm sm:text-base">
               🔒 Please{" "}
-              <Link to="/login" className="text-blue-400 underline">
+              <Link to="/login" className="text-[#067a85] underline">
                 Log in
               </Link>{" "}
               to view live issues.
@@ -389,7 +395,7 @@ function Home() {
                   <p className="text-gray-400 text-sm mb-4">
                     Real-time heatmaps, trend analysis, and city-wide insights
                   </p>
-                  <div className="text-blue-400 text-sm font-medium">View Analytics →</div>
+                  <div className="text-[#067a85] text-sm font-medium">View Analytics →</div>
                 </div>
 
                 <div 
@@ -401,7 +407,7 @@ function Home() {
                   <p className="text-gray-400 text-sm mb-4">
                     AR navigation and issue resolution tools for field workers
                   </p>
-                  <div className="text-blue-400 text-sm font-medium">Open Worker App →</div>
+                  <div className="text-[#067a85] text-sm font-medium">Open Worker App →</div>
                 </div>
 
                 <div 
@@ -413,7 +419,7 @@ function Home() {
                   <p className="text-gray-400 text-sm mb-4">
                     Track top contributors and community engagement
                   </p>
-                  <div className="text-blue-400 text-sm font-medium">View Leaderboard →</div>
+                  <div className="text-[#067a85] text-sm font-medium">View Leaderboard →</div>
                 </div>
               </>
             ) : (
@@ -428,31 +434,31 @@ function Home() {
                   <p className="text-gray-400 text-sm mb-4">
                     Earn points, unlock badges, and climb the leaderboard
                   </p>
-                  <div className="text-blue-400 text-sm font-medium">View Leaderboard →</div>
+                  <div className="text-[#067a85] text-sm font-medium">View Leaderboard →</div>
                 </div>
 
                 <div 
-                  onClick={() => navigate('/my-issues')}
+                  onClick={() => navigate('/predictive-intelligence')}
                   className="bg-[#1a1a1a] p-6 rounded-xl shadow-lg border border-gray-700 hover:scale-105 transition-transform cursor-pointer"
                 >
-                  <div className="text-4xl mb-4">📋</div>
-                  <h3 className="text-xl font-semibold mb-2">My Reports</h3>
+                  <div className="text-4xl mb-4">🧠</div>
+                  <h3 className="text-xl font-semibold mb-2">Predictive Intelligence</h3>
                   <p className="text-gray-400 text-sm mb-4">
-                    Track your reported issues and their resolution status
+                    AI predicts where issues will occur before they happen using ML models
                   </p>
-                  <div className="text-blue-400 text-sm font-medium">View My Issues →</div>
+                  <div className="text-[#067a85] text-sm font-medium">View Predictions →</div>
                 </div>
 
                 <div 
-                  onClick={() => navigate('/comm-map')}
+                  onClick={() => navigate('/ai-solution-engine')}
                   className="bg-[#1a1a1a] p-6 rounded-xl shadow-lg border border-gray-700 hover:scale-105 transition-transform cursor-pointer"
                 >
-                  <div className="text-4xl mb-4">🗺️</div>
-                  <h3 className="text-xl font-semibold mb-2">Community Map</h3>
+                  <div className="text-4xl mb-4">🤖</div>
+                  <h3 className="text-xl font-semibold mb-2">AI Solution Engine</h3>
                   <p className="text-gray-400 text-sm mb-4">
-                    See all issues in your area and collaborate with neighbors
+                    Get AI-generated solutions and smart recommendations for civic issues
                   </p>
-                  <div className="text-blue-400 text-sm font-medium">Explore Map →</div>
+                  <div className="text-[#067a85] text-sm font-medium">Generate Solutions →</div>
                 </div>
               </>
             )}

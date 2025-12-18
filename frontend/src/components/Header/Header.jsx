@@ -107,12 +107,7 @@ function Header() {
                     >
                       My Profile
                     </button>
-                    <button
-                      onClick={() => navigate("/settings")}
-                      className="block w-full text-left px-4 py-2 text-white hover:bg-[#045c65] transition-colors"
-                    >
-                      Settings
-                    </button>
+                    
                     
                       <Logout />
                     

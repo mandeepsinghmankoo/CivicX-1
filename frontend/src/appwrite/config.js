@@ -79,6 +79,16 @@ async uploadFile(file) {
         Permission.delete(Role.user(issuePayload.userId))
       ];
 
+      // If an officials/team id is configured, allow that team to update/delete the document
+      if (shortner.appwriteOfficialsTeamId) {
+        try {
+          permissions.push(Permission.update(Role.team(shortner.appwriteOfficialsTeamId)));
+          permissions.push(Permission.delete(Role.team(shortner.appwriteOfficialsTeamId)));
+        } catch (e) {
+          console.warn('Could not add officials team permissions:', e);
+        }
+      }
+
       // Prepare geolocation fields if available
       const lat = issuePayload.lat !== undefined ? Number(issuePayload.lat) : undefined;
       const lng = issuePayload.lng !== undefined ? Number(issuePayload.lng) : undefined;
@@ -249,7 +259,7 @@ async updateIssueStatus(issueId, statusOrObj) {
     try {
       // Check if user already voted for this issue
       const existingVotes = await databases.listDocuments(
-        shortner.appwriteD-atabaseId,
+        shortner.appwriteDatabaseId,
         VOTES_COLLECTION_ID,
         [
           Query.equal("issueId", issueId),

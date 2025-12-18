@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import configService from '../appwrite/config';
@@ -18,10 +19,13 @@ function AnalyticsDashboard() {
   });
   const [selectedTimeframe, setSelectedTimeframe] = useState('30d');
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedStatuses, setSelectedStatuses] = useState(['pending', 'in_progress', 'resolved']);
+  const [urgencyMin, setUrgencyMin] = useState(0);
+  const [urgencyMax, setUrgencyMax] = useState(100);
 
   useEffect(() => {
     fetchAnalytics();
-  }, [selectedTimeframe, selectedCategory]);
+  }, [selectedTimeframe, selectedCategory, selectedStatuses, urgencyMin, urgencyMax]);
 
   const fetchAnalytics = async () => {
     try {
@@ -34,25 +38,32 @@ function AnalyticsDashboard() {
       const timeframeDays = selectedTimeframe === '7d' ? 7 : selectedTimeframe === '30d' ? 30 : 90;
       const cutoffDate = new Date(now.getTime() - (timeframeDays * 24 * 60 * 60 * 1000));
       
-      const filteredIssues = allIssues.filter(issue => 
+      const filteredIssues = allIssues.filter(issue =>
         new Date(issue.$createdAt) >= cutoffDate &&
         (selectedCategory === 'all' || issue.category === selectedCategory)
       );
 
+      // Additional filters
+      let additionalFiltered = filteredIssues.filter(issue =>
+        selectedStatuses.includes(issue.status) &&
+        (issue.urgency || 0) >= urgencyMin &&
+        (issue.urgency || 0) <= urgencyMax
+      );
+
       // Basic stats
-      const totalIssues = filteredIssues.length;
+      const totalIssues = additionalFiltered.length;
       const resolvedIssues = filteredIssues.filter(issue => issue.status === 'resolved').length;
       const pendingIssues = filteredIssues.filter(issue => issue.status === 'pending' || issue.status === 'in_progress').length;
 
       // Category statistics
       const categoryStats = {};
-      filteredIssues.forEach(issue => {
+      additionalFiltered.forEach(issue => {
         categoryStats[issue.category] = (categoryStats[issue.category] || 0) + 1;
       });
 
       // Severity statistics
       const severityStats = {};
-      filteredIssues.forEach(issue => {
+      additionalFiltered.forEach(issue => {
         const severity = issue.severity || 3;
         severityStats[severity] = (severityStats[severity] || 0) + 1;
       });
@@ -61,7 +72,7 @@ function AnalyticsDashboard() {
       const monthlyTrends = [];
       for (let i = timeframeDays - 1; i >= 0; i--) {
         const date = new Date(now.getTime() - (i * 24 * 60 * 60 * 1000));
-        const dayIssues = filteredIssues.filter(issue => {
+        const dayIssues = additionalFiltered.filter(issue => {
           const issueDate = new Date(issue.$createdAt);
           return issueDate.toDateString() === date.toDateString();
         });
@@ -73,7 +84,7 @@ function AnalyticsDashboard() {
       }
 
       // Hot spots (clustered issues by location)
-      const hotSpots = calculateHotSpots(filteredIssues);
+      const hotSpots = calculateHotSpots(additionalFiltered);
 
       setAnalytics({
         totalIssues,
@@ -170,6 +181,51 @@ function AnalyticsDashboard() {
             <option value="Garbage">Garbage</option>
             <option value="Water Leak">Water Issues</option>
           </select>
+
+          <div>
+            <label className="block text-gray-300 mb-2">Status</label>
+            <div className="flex space-x-4">
+              {['pending', 'in_progress', 'resolved'].map(status => (
+                <label key={status} className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={selectedStatuses.includes(status)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedStatuses([...selectedStatuses, status]);
+                      } else {
+                        setSelectedStatuses(selectedStatuses.filter(s => s !== status));
+                      }
+                    }}
+                    className="mr-2"
+                  />
+                  {status.replace('_', ' ')}
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-gray-300 mb-2">Urgency ({urgencyMin}% - {urgencyMax}%)</label>
+            <div className="space-y-2">
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={urgencyMin}
+                onChange={(e) => setUrgencyMin(Number(e.target.value))}
+                className="w-full"
+              />
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={urgencyMax}
+                onChange={(e) => setUrgencyMax(Number(e.target.value))}
+                className="w-full"
+              />
+            </div>
+          </div>
         </div>
 
         {/* Stats Cards */}

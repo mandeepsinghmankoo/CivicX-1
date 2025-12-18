@@ -51,7 +51,7 @@ function Notifications() {
               <div
                 key={notification.id}
                 className={`bg-[#1a1a1a] rounded-xl p-4 border border-gray-700 hover:bg-gray-800 transition-colors cursor-pointer ${
-                  !notification.read ? 'border-blue-500 bg-blue-900/20' : ''
+                  !notification.read ? 'border-[#045c65] bg-[#045c65]/20' : ''
                 }`}
                 onClick={() => handleNotificationClick(notification)}
               >
@@ -78,7 +78,7 @@ function Notifications() {
                   </button>
                 </div>
                 {!notification.read && (
-                  <div className="w-3 h-3 bg-blue-500 rounded-full absolute right-2 top-2"></div>
+                  <div className="w-3 h-3 bg-[#045c65] rounded-full absolute right-2 top-2"></div>
                 )}
               </div>
             ))

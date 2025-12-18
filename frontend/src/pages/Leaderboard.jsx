@@ -95,27 +95,33 @@ function Leaderboard() {
         .sort((a, b) => b.points - a.points)
         .slice(0, 50);
 
-      // Add rank and fetch user names
-      const leaderboardWithNames = await Promise.all(
-        leaderboardData.map(async (user, index) => {
-          try {
-            const userProfile = await configService.getUserProfileByUserId(user.userId);
-            return {
+      // Add rank and fetch user names, filter to only citizens
+      const leaderboardWithNames = [];
+      let rank = 1;
+
+      for (const user of leaderboardData) {
+        try {
+          const userProfile = await configService.getUserProfileByUserId(user.userId);
+          // Only include citizens in the leaderboard
+          if (userProfile?.role === 'citizen') {
+            leaderboardWithNames.push({
               ...user,
-              rank: index + 1,
+              rank: rank++,
               name: userProfile?.name || `User ${user.userId.slice(-6)}`,
               avatar: userProfile?.avatar || null
-            };
-          } catch (error) {
-            return {
-              ...user,
-              rank: index + 1,
-              name: `User ${user.userId.slice(-6)}`,
-              avatar: null
-            };
+            });
           }
-        })
-      );
+        // eslint-disable-next-line no-unused-vars
+        } catch (error) {
+          // If we can't fetch profile, assume citizen for now (could be improved)
+          leaderboardWithNames.push({
+            ...user,
+            rank: rank++,
+            name: `User ${user.userId.slice(-6)}`,
+            avatar: null
+          });
+        }
+      }
 
       setLeaderboard(leaderboardWithNames);
     } catch (error) {
@@ -226,14 +232,14 @@ function Leaderboard() {
           <p className="text-gray-400">Top contributors making our city better</p>
         </div>
 
-        {/* User Stats Card */}
-        {userData && (
+        {/* User Stats Card - Only show for citizens */}
+        {userData && userData.role === 'citizen' && (
           <div className="bg-gradient-to-r from-blue-900 to-purple-900 p-6 rounded-xl mb-8 border border-blue-700">
             <div className="flex flex-col md:flex-row items-center justify-between">
               <div className="text-center md:text-left mb-4 md:mb-0">
                 <h2 className="text-2xl font-bold mb-2">Your Civic Score</h2>
                 <div className="flex items-center gap-4 text-lg">
-                  <span className="text-3xl font-bold text-yellow-400">{userStats.points}</span>
+                  <span className="text-3xl font-bold text-[#067a85]">{userStats.points}</span>
                   <span className="text-gray-300">points</span>
                   <span className="text-gray-400">•</span>
                   <span className="text-gray-300">Rank #{userStats.rank}</span>
@@ -241,7 +247,7 @@ function Leaderboard() {
               </div>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
                 <div>
-                  <div className="text-2xl font-bold text-blue-400">{userStats.issuesReported}</div>
+                  <div className="text-2xl font-bold text-[#067a85]">{userStats.issuesReported}</div>
                   <div className="text-sm text-gray-300">Reported</div>
                 </div>
                 <div>
@@ -253,7 +259,7 @@ function Leaderboard() {
                   <div className="text-sm text-gray-300">Verified</div>
                 </div>
                 <div>
-                  <div className="text-2xl font-bold text-red-400">{userStats.highSeverityIssues || 0}</div>
+                  <div className="text-2xl font-bold text-[#067a85]">{userStats.highSeverityIssues || 0}</div>
                   <div className="text-sm text-gray-300">High Priority</div>
                 </div>
               </div>
@@ -261,8 +267,8 @@ function Leaderboard() {
           </div>
         )}
 
-        {/* Badges */}
-        {userData && userStats.badges.length > 0 && (
+        {/* Badges - Only show for citizens */}
+        {userData && userData.role === 'citizen' && userStats.badges.length > 0 && (
           <div className="bg-gray-800 p-6 rounded-xl mb-8 border border-gray-700">
             <h3 className="text-xl font-semibold mb-4">🏅 Your Badges</h3>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
@@ -297,11 +303,11 @@ function Leaderboard() {
           </div>
           
           <div className="divide-y divide-gray-700">
-            {leaderboard.map((user, index) => (
+            {leaderboard.map((user) => (
               <div 
                 key={user.userId} 
                 className={`p-4 flex items-center justify-between hover:bg-gray-700 transition-colors ${
-                  user.userId === userData?.$id ? 'bg-blue-900/30 border-l-4 border-blue-500' : ''
+                  user.userId === userData?.$id ? 'bg-[#045c65]/30 border-l-4 border-[#067a85]' : ''
                 }`}
               >
                 <div className="flex items-center gap-4">
@@ -330,7 +336,7 @@ function Leaderboard() {
                 </div>
                 
                 <div className="text-right">
-                  <div className="text-2xl font-bold text-yellow-400">{user.points}</div>
+                  <div className="text-2xl font-bold text-[#067a85]">{user.points}</div>
                   <div className="text-sm text-gray-400">points</div>
                 </div>
               </div>
