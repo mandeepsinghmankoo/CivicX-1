@@ -87,8 +87,8 @@ function ReportIssue() {
 
   const handleFileChange = async (e) => {
     const selected = Array.from(e.target.files);
-    if (selected.length > 3) {
-      setError("Max 3 files allowed");
+    if (selected.length > 6) {
+      setError("Max 6 files allowed");
       return;
     }
     setFiles(selected);
@@ -123,6 +123,62 @@ function ReportIssue() {
           setDetecting(false);
         }
       }
+    }
+  };
+
+  const captureServerSnapshot = async () => {
+    try {
+      const resp = await fetch(`${API_BASE}/Interference/capture-now/`, { method: 'POST' });
+      if (!resp.ok) {
+        const txt = await resp.text().catch(() => null);
+        throw new Error(txt || `HTTP ${resp.status}`);
+      }
+      const js = await resp.json();
+      if (js && js.url) {
+        // Add to backend previews list (newest first)
+        setBackendPreviewUrls(prev => [js.url, ...prev]);
+        try { dispatch(addNotification({ title: 'Server snapshot saved', message: 'A new snapshot was saved on the server.' })); } catch (e) {}
+      }
+    } catch (e) {
+      console.warn('captureServerSnapshot failed', e);
+      setError('Failed to capture server snapshot');
+    }
+  };
+
+  const importServerPreview = async (url) => {
+    try {
+      const remaining = 6 - files.length;
+      if (remaining <= 0) {
+        setError('Max 6 files allowed');
+        return;
+      }
+      const r = await fetch(url);
+      if (!r.ok) throw new Error('Failed to fetch preview');
+      const blob = await r.blob();
+      const fname = url.split('/').pop().split('?')[0] || `preview_${Date.now()}.jpg`;
+      const file = new File([blob], fname, { type: blob.type || 'image/jpeg' });
+      const nextFiles = [...files, file].slice(0, 6);
+      setFiles(nextFiles);
+      setFilePreviewUrls(nextFiles.map((f) => URL.createObjectURL(f)));
+    } catch (e) {
+      console.warn('importServerPreview error', e);
+      setError('Could not import server preview');
+    }
+  };
+
+  const importAllPreviews = async () => {
+    try {
+      const remaining = 6 - files.length;
+      if (remaining <= 0) {
+        setError('Max 6 files allowed');
+        return;
+      }
+      const toImport = backendPreviewUrls.slice(0, remaining);
+      for (const url of toImport) {
+        await importServerPreview(url);
+      }
+    } catch (e) {
+      console.warn('importAllPreviews failed', e);
     }
   };
 
@@ -431,7 +487,7 @@ function ReportIssue() {
       const blob = await res.blob();
       const file = new File([blob], `capture_${Date.now()}.jpg`, { type: "image/jpeg" });
 
-      const nextFiles = [...files, file].slice(0, 3);
+      const nextFiles = [...files, file].slice(0, 6);
       setFiles(nextFiles);
       setFilePreviewUrls(nextFiles.map((f) => URL.createObjectURL(f)));
 
@@ -637,10 +693,19 @@ function ReportIssue() {
                   </div>
                   <p className="text-xs text-gray-400">Direct connection to trained model camera</p>
                   {backendPreviewUrls.length > 0 && (
-                    <div className="mt-2 flex gap-2 flex-wrap">
-                      {backendPreviewUrls.slice(0,6).map((u, idx) => (
-                        <img key={idx} src={u} alt={`preview-${idx}`} className="w-12 h-12 sm:w-16 sm:h-16 object-cover rounded-md border border-gray-600" />
-                      ))}
+                    <div className="mt-2">
+                      <div className="flex gap-2 mb-2">
+                        <Button type="button" onClick={captureServerSnapshot} className="bg-[#045c65] text-white px-3 py-1 rounded">Capture Server Snapshot</Button>
+                        <Button type="button" onClick={importAllPreviews} className="bg-[#045c65] text-white px-3 py-1 rounded">Import All Previews</Button>
+                      </div>
+                      <div className="flex gap-2 flex-wrap">
+                        {backendPreviewUrls.slice(0,12).map((u, idx) => (
+                          <div key={idx} className="relative">
+                            <img src={u} alt={`preview-${idx}`} className="w-12 h-12 sm:w-16 sm:h-16 object-cover rounded-md border border-gray-600" />
+                            <button onClick={() => importServerPreview(u)} className="absolute top-0 right-0 bg-black/60 text-white text-xs px-1 rounded-bl">Add</button>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>
