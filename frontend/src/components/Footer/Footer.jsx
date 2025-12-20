@@ -15,7 +15,7 @@ function Footer() {
             <h3 className='text-xl font-bold text-white'>CivicX</h3>
             <p className='text-sm text-green-200 leading-relaxed'>
               Empowering communities through technology. Report issues, track progress,
-              and make your city better with CivicX.
+              and make your city better with CivicHealthX.
             </p>
           </div>
 

@@ -82,7 +82,8 @@ function ReportIssue() {
 
   const categories = [
     "Garbage", "Pothole", "Water Leak", "Streetlight", "Sewer Overflow",
-    "Broken Bench", "Damaged Road Sign", "Noise Issue", "Electricity", "Others"
+    "Broken Bench", "Damaged Road Sign", "Noise Issue", "Electricity",
+    "Drainage Issues", "Waterlogged Sites", "Medical Waste", "Others"
   ];
 
   const handleFileChange = async (e) => {
