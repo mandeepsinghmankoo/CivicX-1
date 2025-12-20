@@ -24,6 +24,25 @@ function Home() {
   const [voteCounts, setVoteCounts] = useState({});
   const [isLoading, setIsLoading] = useState(true);
 
+  const handleDelete = async (e, issueId) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!confirm('Delete this issue? This action cannot be undone.')) return;
+    try {
+      await configService.deleteIssue(issueId);
+      setIssues(prev => prev.filter(i => i.id !== issueId));
+      setFilteredIssues(prev => prev.filter(i => i.id !== issueId));
+      setVoteCounts(prev => {
+        const next = { ...prev };
+        delete next[issueId];
+        return next;
+      });
+    } catch (err) {
+      console.error('Delete failed', err);
+      alert('Failed to delete issue');
+    }
+  };
+
   // 🔹 Fetch issues from both collections
   useEffect(() => {
     const fetchIssues = async () => {
@@ -198,8 +217,10 @@ function Home() {
         ></div>
 
         <div className='w-full md:w-5/6 p-4 md:p-30 relative z-10'>
-          <div className='text-2xl sm:text-3xl md:text-4xl lg:text-6xl text-white font-bold leading-tight'>
-            Empowering Citizens, Transforming Communities.
+          <div className='text-xl sm:text-3xl md:text-4xl lg:text-5xl text-white font-bold leading-tight w-2/3'>
+            Next-Generation Civic Health Surveillance and Resolution
+
+
           </div>
 
           {/* 🔎 Search bar */}
@@ -286,8 +307,15 @@ function Home() {
                   <div
                     key={issue.id}
                     onClick={() => navigate(`/issues/${issue.id}`)}
-                    className="bg-[#1a1a1a] p-4 md:p-6 rounded-xl shadow-lg border border-gray-700 hover:scale-105 transition-transform cursor-pointer"
+                    className="relative bg-[#1a1a1a] p-4 md:p-6 rounded-xl shadow-lg border border-gray-700 hover:scale-105 transition-transform cursor-pointer"
                   >
+                    <button
+                      className="absolute top-3 right-3 bg-red-600 hover:bg-red-700 text-white text-xs px-2 py-1 rounded"
+                      onClick={(e) => handleDelete(e, issue.id)}
+                      aria-label="Delete issue"
+                    >
+                      Delete
+                    </button>
                     <h3 className="text-lg font-semibold">{issue.title}</h3>
                     
                     {/* Image Preview */}

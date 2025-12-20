@@ -11,6 +11,20 @@ function MyIssues() {
 	const [issues, setIssues] = useState([])
 	const [loading, setLoading] = useState(true)
 
+	const handleDelete = async (e, issueId) => {
+		e.preventDefault();
+		e.stopPropagation();
+		if (!confirm('Delete this issue? This action cannot be undone.')) return;
+		try {
+			await configService.deleteIssue(issueId);
+			setIssues(prev => prev.filter(i => i.$id !== issueId));
+			setLoading(false);
+		} catch (err) {
+			console.error('Delete failed', err);
+			alert('Failed to delete issue');
+		}
+	}
+
 	useEffect(() => {
 		(async () => {
 			try {
@@ -32,8 +46,15 @@ function MyIssues() {
 					<Link
 						to={`/issues/${issue.$id}`}
 						key={issue.$id}
-						className="bg-[#1a1a1a] p-4 sm:p-6 rounded-xl shadow-lg border border-gray-700 hover:scale-105 transition-transform block"
+						className="relative bg-[#1a1a1a] p-4 sm:p-6 rounded-xl shadow-lg border border-gray-700 hover:scale-105 transition-transform block"
 					>
+						<button
+							className="absolute top-3 right-3 bg-red-600 hover:bg-red-700 text-white text-xs px-2 py-1 rounded"
+							onClick={(e) => handleDelete(e, issue.$id)}
+							aria-label="Delete issue"
+						>
+							Delete
+						</button>
 						<h2 className="text-lg sm:text-xl font-semibold">{issue.title}</h2>
 						
 						{/* Image Preview */}

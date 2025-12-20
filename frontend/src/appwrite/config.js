@@ -18,6 +18,9 @@ const client = new Client()
   .setEndpoint(resolveEndpoint())
   .setProject(shortner.appwriteProjectId);
 
+// API base can be overridden via Vite env variable VITE_API_BASE (useful for ngrok)
+const API_BASE = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_BASE) ? import.meta.env.VITE_API_BASE : 'http://127.0.0.1:8000';
+
 export const account = new Account(client);
 export const databases = new Databases(client);
 export const storage = new Storage(client);
@@ -337,7 +340,7 @@ async updateIssueStatus(issueId, statusOrObj) {
   // Enhanced detection method for backend integration
   async detectIssueCategoryFromBase64({ imageBase64 }) {
     try {
-      const response = await fetch('http://127.0.0.1:8000/Interference/classify_base64/', {
+      const response = await fetch(`${API_BASE}/Interference/classify_base64/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -370,6 +373,37 @@ async updateIssueStatus(issueId, statusOrObj) {
     } catch (err) {
       console.error("Error fetching vote count:", err);
       return 0;
+    }
+  }
+
+  // Delete issue and associated votes
+  async deleteIssue(issueId) {
+    try {
+      // remove votes tied to the issue
+      const votes = await databases.listDocuments(
+        shortner.appwriteDatabaseId,
+        VOTES_COLLECTION_ID,
+        [Query.equal('issueId', issueId)]
+      );
+      for (const v of votes.documents) {
+        try {
+          await databases.deleteDocument(shortner.appwriteDatabaseId, VOTES_COLLECTION_ID, v.$id);
+        } catch (e) {
+          console.warn('Failed to delete vote', v.$id, e);
+        }
+      }
+
+      // delete the issue document
+      await databases.deleteDocument(
+        shortner.appwriteDatabaseId,
+        shortner.appwriteIssuesCollectionId,
+        issueId
+      );
+
+      return true;
+    } catch (err) {
+      console.error('Error deleting issue:', err);
+      throw err;
     }
   }
 }

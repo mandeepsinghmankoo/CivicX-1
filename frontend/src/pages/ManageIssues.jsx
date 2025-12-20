@@ -64,6 +64,21 @@ function ManageIssues() {
 		setFilteredIssues(filtered);
 	}, [issues, selectedStatuses, dateFrom, dateTo, urgencyMin, urgencyMax])
 
+	const handleDelete = async (e, issueId) => {
+		e.stopPropagation();
+		if (!confirm('Delete this issue? This action cannot be undone.')) return;
+		try {
+			await configService.deleteIssue(issueId);
+			setIssues(prev => prev.filter(i => i.$id !== issueId));
+			setFilteredIssues(prev => prev.filter(i => i.$id !== issueId));
+			setToast('Issue deleted');
+			setTimeout(() => setToast(null), 3000);
+		} catch (err) {
+			console.error('Delete failed', err);
+			alert('Failed to delete issue');
+		}
+	}
+
 	
 
 	return (
@@ -154,7 +169,14 @@ function ManageIssues() {
 			) : (
 				<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
 				{filteredIssues.map((issue) => (
-					<div key={issue.$id} className="bg-[#1a1a1a] p-4 sm:p-6 rounded-xl shadow-lg border border-gray-700 cursor-pointer hover:bg-[#2a2a2a] transition-colors" onClick={() => navigate(`/issues/${issue.$id}`)}>
+					<div key={issue.$id} className="relative bg-[#1a1a1a] p-4 sm:p-6 rounded-xl shadow-lg border border-gray-700 cursor-pointer hover:bg-[#2a2a2a] transition-colors" onClick={() => navigate(`/issues/${issue.$id}`)}>
+						<button
+							className="absolute top-3 right-3 bg-red-600 hover:bg-red-700 text-white text-xs px-2 py-1 rounded"
+							onClick={(e) => handleDelete(e, issue.$id)}
+							aria-label="Delete issue"
+						>
+							Delete
+						</button>
 						<h2 className="text-lg sm:text-xl font-semibold">{issue.title}</h2>
 						<p className="mt-2 text-gray-400 text-sm sm:text-base">{issue.description}</p>
 						

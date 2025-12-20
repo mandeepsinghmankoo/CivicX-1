@@ -30,6 +30,7 @@ function ReportIssue() {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const streamRef = useRef(null);
+  const API_BASE = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_BASE) ? import.meta.env.VITE_API_BASE : 'http://127.0.0.1:8000';
   const detectionIntervalRef = useRef(null);
   const userData = useSelector((state) => state.auth.userData);
   const { soundEnabled } = useSelector(state => state.notifications);
@@ -53,7 +54,7 @@ function ReportIssue() {
           const lng = pos.coords.longitude;
           
           try {
-            const response = await fetch(`http://127.0.0.1:8000/Interference/reverse-geocode/?lat=${lat}&lng=${lng}`);
+            const response = await fetch(`${API_BASE}/Interference/reverse-geocode/?lat=${lat}&lng=${lng}`);
             if (response.ok) {
               const data = await response.json();
               const address = data.address || `${lat}, ${lng}`;
@@ -150,7 +151,7 @@ function ReportIssue() {
     
     // Stop backend camera service if we started it
     if (useBackendCamera && backendStartedRef.current) {
-      fetch('http://127.0.0.1:8000/Interference/stop-webcam/', {
+      fetch(`${API_BASE}/Interference/stop-webcam/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -160,7 +161,7 @@ function ReportIssue() {
     }
 
     // Fetch previews saved by backend and show them
-    fetch('http://127.0.0.1:8000/Interference/previews/')
+    fetch(`${API_BASE}/Interference/previews/`)
       .then(r => r.json())
       .then(data => {
         if (data && Array.isArray(data.previews)) {
@@ -178,7 +179,7 @@ function ReportIssue() {
       if (!useBackendCamera) {
         try {
           // This should call the stop endpoint so the server doesn't hold the physical camera
-          await fetch('http://127.0.0.1:8000/Interference/stop-webcam/', { method: 'POST' });
+          await fetch(`${API_BASE}/Interference/stop-webcam/`, { method: 'POST' });
           backendStartedRef.current = false;
           console.log('Requested backend to stop before opening local camera');
         } catch (stopErr) {
@@ -190,7 +191,7 @@ function ReportIssue() {
         // Start server camera service
         try {
           console.log("Starting backend camera service...");
-          const response = await fetch('http://127.0.0.1:8000/Interference/start-webcam/', {
+          const response = await fetch(`${API_BASE}/Interference/start-webcam/`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -213,7 +214,7 @@ function ReportIssue() {
           detectionIntervalRef.current = setInterval(async () => {
             try {
               // fetch previews
-              const previewsResp = await fetch('http://127.0.0.1:8000/Interference/previews/');
+              const previewsResp = await fetch(`${API_BASE}/Interference/previews/`);
               if (previewsResp.ok) {
                 const previewsData = await previewsResp.json();
                 if (previewsData && Array.isArray(previewsData.previews)) {
@@ -222,7 +223,7 @@ function ReportIssue() {
               }
 
               // fetch latest detection
-              const latestResp = await fetch('http://127.0.0.1:8000/Interference/latest-detection/');
+              const latestResp = await fetch(`${API_BASE}/Interference/latest-detection/`);
               if (latestResp.ok) {
                 const latestData = await latestResp.json();
                 if (latestData && latestData.latest) {
@@ -252,6 +253,15 @@ function ReportIssue() {
         return; // done - do not open local camera
       }
 
+      // First, ensure browser supports camera access (getUserMedia requires a secure context)
+      if (!navigator.mediaDevices || typeof navigator.mediaDevices.getUserMedia !== 'function') {
+        const help = "Camera not available: your browser or context does not provide navigator.mediaDevices.getUserMedia.\n" +
+          "On mobile this often happens when using an insecure (http) origin — try using https, localhost, or a tunnel (ngrok).";
+        setError(help);
+        setIsLiveDetection(false);
+        return;
+      }
+
       // First, start the local webcam for preview
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
@@ -275,7 +285,7 @@ function ReportIssue() {
       if (useBackendCamera) {
         try {
           console.log("Starting backend camera service...");
-          const response = await fetch('http://127.0.0.1:8000/Interference/start-webcam/', {
+          const response = await fetch(`${API_BASE}/Interference/start-webcam/`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -319,7 +329,7 @@ function ReportIssue() {
               
               try {
                 // Send to Django for classification
-                const detectionResponse = await fetch('http://127.0.0.1:8000/Interference/classify_image/', {
+                const detectionResponse = await fetch(`${API_BASE}/Interference/classify_image/`, {
                   method: 'POST',
                   body: formData,
                 });
@@ -462,7 +472,7 @@ function ReportIssue() {
     
     // If it's an address, geocode it
     try {
-      const response = await fetch(`http://127.0.0.1:8000/Interference/geocode/?address=${encodeURIComponent(loc)}`);
+      const response = await fetch(`${API_BASE}/Interference/geocode/?address=${encodeURIComponent(loc)}`);
       if (response.ok) {
         const data = await response.json();
         if (data.lat && data.lng) {
