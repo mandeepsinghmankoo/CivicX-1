@@ -48,5 +48,75 @@
             "city": "Ludhiana",
             "region": "Punjab"
         }
+    },
+    {
+        "timestamp": "2025-12-20 21:47:53.789645",
+        "class_detected": "Graffitti",
+        "location": {
+            "lat": "30.7363",
+            "lon": "76.7884",
+            "city": "Chandigarh",
+            "region": "Chandigarh"
+        }
+    },
+    {
+        "timestamp": "2025-12-20 21:48:10.274994",
+        "class_detected": "Garbage",
+        "location": {
+            "lat": "30.7363",
+            "lon": "76.7884",
+            "city": "Chandigarh",
+            "region": "Chandigarh"
+        }
+    },
+    {
+        "timestamp": "2025-12-20 21:48:16.561820",
+        "class_detected": "Garbage",
+        "location": {
+            "lat": "30.7363",
+            "lon": "76.7884",
+            "city": "Chandigarh",
+            "region": "Chandigarh"
+        }
+    },
+    {
+        "timestamp": "2025-12-20 22:36:26.464497",
+        "class_detected": "Garbage",
+        "location": {
+            "lat": "30.7363",
+            "lon": "76.7884",
+            "city": "Chandigarh",
+            "region": "Chandigarh"
+        }
+    },
+    {
+        "timestamp": "2025-12-21 02:01:02.526354",
+        "class_detected": "Garbage",
+        "location": {
+            "lat": "30.7363",
+            "lon": "76.7884",
+            "city": "Chandigarh",
+            "region": "Chandigarh"
+        }
+    },
+    {
+        "timestamp": "2025-12-21 02:18:23.862248",
+        "class_detected": "Garbage",
+        "location": {
+            "lat": "30.7363",
+            "lon": "76.7884",
+            "city": "Chandigarh",
+            "region": "Chandigarh"
+        }
+    },
+    {
+        "timestamp": "2025-12-21 02:19:36.691068",
+        "class_detected": "Garbage",
+        "location": {
+            "lat": "30.7363",
+            "lon": "76.7884",
+            "city": "Chandigarh",
+            "region": "Chandigarh"
+        }
     }
 ]

@@ -11,11 +11,29 @@ from django.views.decorators.csrf import csrf_exempt
 
 from ultralytics import YOLO
 
-# ---------------------- MODEL PATH ----------------------
-MODEL_PATH = r"D:/CivicX-Final/CivicX-1/backend/runs/classify/civicx_cls_model6/weights/best.pt"
-model = YOLO(MODEL_PATH)
-
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+# ---------------------- MODEL PATH ----------------------
+# Try multiple possible model paths
+MODEL_PATHS = [
+    r"D:/CivicX-Final/CivicX-1/backend/runs/classify/civicx_cls_model6/weights/best.pt",
+    os.path.join(BASE_DIR, "runs", "classify", "civicx_cls_model6", "weights", "best.pt"),
+    os.path.join(BASE_DIR, "models", "best.pt"),
+    "yolov8n-cls.pt"  # fallback to default YOLOv8 classification model
+]
+
+MODEL_PATH = None
+for path in MODEL_PATHS:
+    if os.path.exists(path):
+        MODEL_PATH = path
+        break
+
+if MODEL_PATH is None:
+    print("Warning: No model file found. Using default YOLOv8 classification model.")
+    MODEL_PATH = "yolov8n-cls.pt"  # This will auto-download if not present
+
+print(f"Loading model from: {MODEL_PATH}")
+model = YOLO(MODEL_PATH)
 LOG_FILE = os.path.join(BASE_DIR, "detections_log.json")
 PREVIEWS_DIR = os.path.join(BASE_DIR, "previews")
 
@@ -372,6 +390,38 @@ def preview_image(request, filename):
     if not os.path.exists(path):
         return HttpResponse(status=404)
     return FileResponse(open(path, 'rb'), content_type='image/jpeg')
+
+
+@csrf_exempt
+def capture_now(request):
+    """Capture a single frame from the server camera (or direct VideoCapture) and save to previews."""
+    try:
+        cap = cv2.VideoCapture(0)
+        if not cap.isOpened():
+            try:
+                cap.release()
+            except Exception:
+                pass
+            return JsonResponse({"error": "Could not access camera"}, status=500)
+
+        ret, frame = cap.read()
+        try:
+            cap.release()
+        except Exception:
+            pass
+
+        if not ret or frame is None:
+            return JsonResponse({"error": "Failed to capture frame"}, status=500)
+
+        fname = _save_preview_image(frame)
+        if not fname:
+            return JsonResponse({"error": "Failed to save preview"}, status=500)
+
+        url = request.build_absolute_uri(f"/Interference/preview/{fname}")
+        return JsonResponse({"status": "ok", "url": url})
+    except Exception as e:
+        print('capture_now error:', e)
+        return JsonResponse({"error": str(e)}, status=500)
 
 
 # ---------------------- START WEBCAM STREAM (API) ----------------------
