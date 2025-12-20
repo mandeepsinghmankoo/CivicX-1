@@ -542,6 +542,13 @@ function ReportIssue() {
       // Note: Officials will be notified via real-time subscription in useNotifications hook
 
       setSuccess(true);
+      // Dispatch global event so assistant can announce success and stop listening
+      try {
+        const evt = new CustomEvent('issueSubmitted', { detail: newIssue });
+        window.dispatchEvent(evt);
+      } catch (e) {
+        console.warn('Could not dispatch issueSubmitted event', e);
+      }
       setTimeout(() => navigate("/"), 2000);
     } catch (err) {
       console.error(err);
