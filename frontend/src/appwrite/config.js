@@ -5,18 +5,20 @@ import shortner from "../ENV_Shortner/Shortner";
 const resolveEndpoint = () => {
   const viteEndpoint = import.meta.env.VITE_APPWRITE_ENDPOINT;
   const candidate1 = (typeof viteEndpoint === 'string' && viteEndpoint && viteEndpoint !== 'undefined') ? viteEndpoint : null;
-  const candidate2 = (typeof shortner?.appwriteUrl === 'string' && shortner.appwriteUrl && shortner.appwriteUrl !== 'undefined') ? shortner.appwriteUrl : null;
-  const endpoint = candidate1 || candidate2 || 'https://cloud.appwrite.io/v1';
-  if (!endpoint || endpoint === 'undefined') {
-    // Helpful debug message for development
-    console.error('Appwrite endpoint is not set or is invalid. Using fallback:', endpoint);
-  }
-  return endpoint;
+  const candidate2 = (shortner?.appwriteUrl) ? shortner.appwriteUrl : null;
+  if (candidate1) return candidate1;
+  if (candidate2) return candidate2;
+  throw new Error('Appwrite endpoint not configured. Set VITE_APPWRITE_ENDPOINT in frontend/.env.local');
 };
 
-const client = new Client()
-  .setEndpoint(resolveEndpoint())
-  .setProject(shortner.appwriteProjectId);
+const endpoint = resolveEndpoint();
+const projectId = shortner.appwriteProjectId;
+
+console.log('Appwrite endpoint:', endpoint);
+if (!projectId) console.warn('Appwrite project ID missing: set VITE_APPWRITE_PROJECT_ID in .env.local');
+
+const client = new Client().setEndpoint(endpoint);
+if (projectId) client.setProject(projectId);
 
 // API base can be overridden via Vite env variable VITE_API_BASE (useful for ngrok)
 const API_BASE = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_BASE) ? import.meta.env.VITE_API_BASE : 'http://127.0.0.1:8000';

@@ -1,4 +1,4 @@
-import Icon from '../../public/NavIcon.png'
+import Icon from '/NavIcon.png?url'
 
 function Logo(){
     return (
