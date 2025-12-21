@@ -1,0 +1,132 @@
+[
+    {
+        "timestamp": "2025-12-18 21:17:46.555955",
+        "class_detected": "Garbage",
+        "location": {
+            "lat": "30.9120",
+            "lon": "75.8538",
+            "city": "Ludhiana",
+            "region": "Punjab"
+        }
+    },
+    {
+        "timestamp": "2025-12-18 21:18:08.364950",
+        "class_detected": "DamagedElectricalPoles",
+        "location": {
+            "lat": "30.9120",
+            "lon": "75.8538",
+            "city": "Ludhiana",
+            "region": "Punjab"
+        }
+    },
+    {
+        "timestamp": "2025-12-18 21:18:16.759294",
+        "class_detected": "Garbage",
+        "location": {
+            "lat": "30.9120",
+            "lon": "75.8538",
+            "city": "Ludhiana",
+            "region": "Punjab"
+        }
+    },
+    {
+        "timestamp": "2025-12-18 21:18:34.066683",
+        "class_detected": "DamagedElectricalPoles",
+        "location": {
+            "lat": "30.9120",
+            "lon": "75.8538",
+            "city": "Ludhiana",
+            "region": "Punjab"
+        }
+    },
+    {
+        "timestamp": "2025-12-18 21:18:39.816008",
+        "class_detected": "Garbage",
+        "location": {
+            "lat": "30.9120",
+            "lon": "75.8538",
+            "city": "Ludhiana",
+            "region": "Punjab"
+        }
+    },
+    {
+        "timestamp": "2025-12-20 21:47:53.789645",
+        "class_detected": "Graffitti",
+        "location": {
+            "lat": "30.7363",
+            "lon": "76.7884",
+            "city": "Chandigarh",
+            "region": "Chandigarh"
+        }
+    },
+    {
+        "timestamp": "2025-12-20 21:48:10.274994",
+        "class_detected": "Garbage",
+        "location": {
+            "lat": "30.7363",
+            "lon": "76.7884",
+            "city": "Chandigarh",
+            "region": "Chandigarh"
+        }
+    },
+    {
+        "timestamp": "2025-12-20 21:48:16.561820",
+        "class_detected": "Garbage",
+        "location": {
+            "lat": "30.7363",
+            "lon": "76.7884",
+            "city": "Chandigarh",
+            "region": "Chandigarh"
+        }
+    },
+    {
+        "timestamp": "2025-12-20 22:36:26.464497",
+        "class_detected": "Garbage",
+        "location": {
+            "lat": "30.7363",
+            "lon": "76.7884",
+            "city": "Chandigarh",
+            "region": "Chandigarh"
+        }
+    },
+    {
+        "timestamp": "2025-12-21 02:01:02.526354",
+        "class_detected": "Garbage",
+        "location": {
+            "lat": "30.7363",
+            "lon": "76.7884",
+            "city": "Chandigarh",
+            "region": "Chandigarh"
+        }
+    },
+    {
+        "timestamp": "2025-12-21 02:18:23.862248",
+        "class_detected": "Garbage",
+        "location": {
+            "lat": "30.7363",
+            "lon": "76.7884",
+            "city": "Chandigarh",
+            "region": "Chandigarh"
+        }
+    },
+    {
+        "timestamp": "2025-12-21 02:19:36.691068",
+        "class_detected": "Garbage",
+        "location": {
+            "lat": "30.7363",
+            "lon": "76.7884",
+            "city": "Chandigarh",
+            "region": "Chandigarh"
+        }
+    },
+    {
+        "timestamp": "2025-12-21 03:26:09.199642",
+        "class_detected": "Garbage",
+        "location": {
+            "lat": "30.7363",
+            "lon": "76.7884",
+            "city": "Chandigarh",
+            "region": "Chandigarh"
+        }
+    }
+]
