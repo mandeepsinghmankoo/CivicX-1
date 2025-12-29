@@ -7,7 +7,7 @@ import './App.css'
 import Home from './pages/Home.jsx';
 import AuthLayout from './components/AuthLayout.jsx';
 import Signup from './pages/Signup.jsx';
-import LogIn from './pages/Login.jsx';
+import LogIn from './pages/LogIn.jsx';
 import ReportIssue from './pages/ReportIssue.jsx';
 import Unauthorized from './pages/Unauthorized.jsx';
 import LiveIssues from './pages/LiveIssues.jsx';
